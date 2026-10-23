@@ -18,7 +18,7 @@ st.sidebar.header("⚙️ Configuración y Filtros")
 df = pd.read_excel("Seguimiento Validación 2026 (1).xlsx")
 
     # --- IDENTIFICACIÓN EXACTA O POR LETRA DE COLUMNA ---
-    def get_col(letters, keywords):
+def get_col(letters, keywords):
         for kw in keywords:
             for col in df.columns:
                 if kw.lower() in str(col).lower():
