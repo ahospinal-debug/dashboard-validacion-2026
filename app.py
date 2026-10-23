@@ -27,9 +27,9 @@ def get_col(keywords):
             return col
     return None
 
-# Mapeo flexible sin depender de letras ni posiciones fijas
+# Mapeo preciso para no confundir "Docente diseñador" con "Diseñador instruccional"
 col_validador = get_col(["validador"])
-col_disenador = get_col(["diseñador"]) or get_col(["disenador"])
+col_disenador = get_col(["diseñador", "instruccional"]) or get_col(["disenador", "instruccional"]) or get_col(["instruccional"])
 col_obs = get_col(["nivel", "observ"]) or get_col(["observación"]) or get_col(["observacion"])
 col_estado = get_col(["estado", "validac"]) or get_col(["estado"])
 col_eap = get_col(["eap"]) or get_col(["carrera"]) or get_col(["programa"])
@@ -189,7 +189,7 @@ with g2:
         fig_prop = px.pie(
             df_prop, values='Cantidad', names='Observada', hole=0.4,
             color='Observada',
-            color_discrete_map={'Sí': '#50C878', 'No': '#FF4D4D'}
+            color_discrete_map={'Sí': '#FF6F61', 'No': '#50C878'}  # Sí (Rojo), No (Verde)
         )
         fig_prop.update_traces(textinfo='percent+label')
         st.plotly_chart(fig_prop, use_container_width=True)
