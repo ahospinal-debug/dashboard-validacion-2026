@@ -15,10 +15,7 @@ st.markdown("---")
 
 # BARRA LATERAL (SIDEBAR)
 st.sidebar.header("⚙️ Configuración y Filtros")
-uploaded_file = st.sidebar.file_uploader("Cargar archivo Excel", type=["xlsx"])
-
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
+df = pd.read_excel("Seguimiento Validación 2026 (1).xlsx")
 
     # --- IDENTIFICACIÓN EXACTA O POR LETRA DE COLUMNA ---
     def get_col(letters, keywords):
