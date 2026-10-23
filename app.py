@@ -29,24 +29,24 @@ def get_col(letters, keywords):
                 return df.columns[idx]
         return None
 
-    # Mapeo según especificaciones
-    col_validador = get_col(["O"], ["VALIDADOR", "VALIADORA"])
-    col_disenador = get_col(["AB"], ["DISEÑADOR INSTRUCCIONAL", "DISEÑADOR", "DISENADOR"])
-    col_obs = get_col(["AJ"], ["NIVEL DE OBSERVACIÓN", "NIVEL DE OBSERVACION", "OBSERVACIÓN"])
-    col_estado = get_col([], ["ESTADO DE LA VALIDACIÓN", "ESTADO VALIDACION", "ESTADO DE VALIDACION"])
-    col_eap = get_col([], ["EAP", "CARRERA", "PROGRAMA"])
-    col_asig = get_col([], ["ASIGNATURA", "NOMBRE ASIGNATURA", "CURSO"])
+# Mapeo según especificaciones
+col_validador = get_col(["O"], ["VALIDADOR", "VALIADORA"])
+col_disenador = get_col(["AB"], ["DISEÑADOR INSTRUCCIONAL", "DISEÑADOR", "DISENADOR"])
+col_obs = get_col(["AJ"], ["NIVEL DE OBSERVACIÓN", "NIVEL DE OBSERVACION", "OBSERVACIÓN"])
+col_estado = get_col([], ["ESTADO DE LA VALIDACIÓN", "ESTADO VALIDACION", "ESTADO DE VALIDACION"])
+col_eap = get_col([], ["EAP", "CARRERA", "PROGRAMA"])
+col_asig = get_col([], ["ASIGNATURA", "NOMBRE ASIGNATURA", "CURSO"])
 
-    # Columnas de Fechas para las Reglas del Semáforo
-    col_f_ter_val = get_col(["U"], ["FECHA DE TERMINO DE VALIDACION", "TÉRMINO DE VALIDACIÓN", "TERMINO DE VALIDACION"])
-    col_f_envio_obs = get_col(["AG"], ["FECHA DE ENVÍO DE OBSERVACIONES", "ENVIO DE OBSERVACIONES", "OBSERVACIONES DEL VALIDADOR"])
-    col_f_resp_dis = get_col(["AK"], ["FECHA DE RESPUESTA DEL DISEÑADOR", "RESPUESTA DEL DISEÑADOR", "RESPUESTA DISEÑADOR"])
+# Columnas de Fechas para las Reglas del Semáforo
+col_f_ter_val = get_col(["U"], ["FECHA DE TERMINO DE VALIDACION", "TÉRMINO DE VALIDACIÓN", "TERMINO DE VALIDACION"])
+col_f_envio_obs = get_col(["AG"], ["FECHA DE ENVÍO DE OBSERVACIONES", "ENVIO DE OBSERVACIONES", "OBSERVACIONES DEL VALIDADOR"])
+col_f_resp_dis = get_col(["AK"], ["FECHA DE RESPUESTA DEL DISEÑADOR", "RESPUESTA DEL DISEÑADOR", "RESPUESTA DISEÑADOR"])
 
     if not col_estado:
         col_estado = df.columns[10] if len(df.columns) > 10 else df.columns[0]
 
-    # Rellenar vacíos manteniendo el total de asignaturas
-    df[col_estado] = df[col_estado].fillna('Sin registro / No iniciada')
+# Rellenar vacíos manteniendo el total de asignaturas
+df[col_estado] = df[col_estado].fillna('Sin registro / No iniciada')
     if col_obs and col_obs in df.columns:
         df[col_obs] = df[col_obs].fillna('Sin observaciones')
 
