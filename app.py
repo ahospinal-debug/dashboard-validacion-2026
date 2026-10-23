@@ -9,13 +9,37 @@ st.set_page_config(
     layout="wide"
 )
 
+# ESTILOS CSS PERSONALIZADOS PARA TARJETAS TIPO SEMÁFORO Y TARJETAS PROFESIONALES
+st.markdown("""
+    <style>
+    .metric-card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-left: 5px solid #2ecc71;
+        margin-bottom: 10px;
+    }
+    .metric-title {
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: 600;
+    }
+    .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # TÍTULO PRINCIPAL
 st.title("📊 Dashboard de Seguimiento de Validación 2026")
 
 # BARRA LATERAL (SIDEBAR)
 st.sidebar.header("⚙️ Configuración y Filtros")
 
-# Carga automática desde el repositorio
+# Carga automática del archivo subido a GitHub
 df = pd.read_excel("Seguimiento Validación 2026 (1).xlsx")
 
 # --- IDENTIFICACIÓN EXACTA O POR LETRA DE COLUMNA ---
@@ -30,7 +54,7 @@ def get_col(letters, keywords):
             return df.columns[idx]
     return None
 
-# Mapeo según especificaciones
+# Mapeo de columnas
 col_validador = get_col(["O"], ["VALIDADOR", "VALIADORA"])
 col_disenador = get_col(["AB"], ["DISEÑADOR INSTRUCCIONAL", "DISEÑADOR", "DISENADOR"])
 col_obs = get_col(["AJ"], ["NIVEL DE OBSERVACIÓN", "NIVEL DE OBSERVACION", "OBSERVACIÓN"])
@@ -64,7 +88,27 @@ if col_validador and selected_val != "Todos":
 if col_disenador and selected_dis != "Todos":
     df_filtered = df_filtered[df_filtered[col_disenador].astype(str) == selected_dis]
 
-# --- VISUALIZACIONES PRINCIPALES ---
+# --- SEMÁFORO DE AVANCE DE VALIDACIÓN (TARJETAS KPI PROFESIONALES) ---
+st.subheader("🚦 Semáforo de Avance de Validación")
+
+total_asignaturas = len(df_filtered)
+completadas = len(df_filtered[df_filtered[col_estado].astype(str).str.contains("Pasa|Aprobad|Completa", case=False, na=False)])
+observadas = len(df_filtered[df_filtered[col_estado].astype(str).str.contains("Observad", case=False, na=False)])
+pendientes = total_asignaturas - (completadas + observadas)
+
+m1, m2, m3, m4 = st.columns(4)
+with m1:
+    st.markdown('<div class="metric-card" style="border-left-color: #3498db;"><div class="metric-title">Total Asignaturas</div><div class="metric-value">{}</div></div>'.format(total_asignaturas), unsafe_allow_html=True)
+with m2:
+    st.markdown('<div class="metric-card" style="border-left-color: #2ecc71;"><div class="metric-title">🟢 Pasa a Implementación</div><div class="metric-value">{}</div></div>'.format(completadas), unsafe_allow_html=True)
+with m3:
+    st.markdown('<div class="metric-card" style="border-left-color: #f1c40f;"><div class="metric-title">🟡 Observadas</div><div class="metric-value">{}</div></div>'.format(observadas), unsafe_allow_html=True)
+with m4:
+    st.markdown('<div class="metric-card" style="border-left-color: #e74c3c;"><div class="metric-title">🔴 Sin Registro / No iniciada</div><div class="metric-value">{}</div></div>'.format(pendientes), unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- VISUALIZACIONES PRINCIPALES (PALETA VERDE Y DISEÑO PROFESIONAL) ---
 col1, col2 = st.columns(2)
 
 with col1:
@@ -72,11 +116,11 @@ with col1:
     estado_counts = df_filtered[col_estado].value_counts().reset_index()
     estado_counts.columns = ['Estado', 'Cantidad']
     
-    # Paleta de colores personalizada del diseño original
-    colors_estado = {
+    # Colores verdes / profesionales
+    colors_map = {
         "Pasa a implementación": "#2ecc71",
-        "Observada": "#ff4d4d",
-        "Sin registro / No iniciada": "#a29bfe"
+        "Observada": "#e74c3c",
+        "Sin registro / No iniciada": "#95a5a6"
     }
     
     fig_estado = px.bar(
@@ -86,10 +130,15 @@ with col1:
         text='Cantidad',
         labels={'Estado': '', 'Cantidad': 'N° Asignaturas'},
         color='Estado',
-        color_discrete_map=colors_estado
+        color_discrete_map=colors_map
     )
     fig_estado.update_traces(textposition='outside')
-    fig_estado.update_layout(showlegend=False, xaxis_tickangle=-30)
+    fig_estado.update_layout(
+        showlegend=False, 
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=30, b=20)
+    )
     st.plotly_chart(fig_estado, use_container_width=True)
 
 with col2:
@@ -98,19 +147,17 @@ with col2:
         obs_counts = df_filtered[col_obs].fillna("Sin Registro").value_counts().reset_index()
         obs_counts.columns = ['Observación', 'Cantidad']
         
-        # Paleta magenta / verde original
-        colors_obs = {
-            "No": "#ff0055",
-            "Sí": "#2ecc71"
-        }
-        
         fig_obs = px.pie(
             obs_counts, 
             values='Cantidad', 
             names='Observación', 
             hole=0.4,
-            color='Observación',
-            color_discrete_map=colors_obs
+            color_discrete_sequence=["#2ecc71", "#e74c3c", "#f39c12", "#3498db"]
+        )
+        fig_obs.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=20, r=20, t=30, b=20)
         )
         st.plotly_chart(fig_obs, use_container_width=True)
     else:
@@ -118,16 +165,26 @@ with col2:
 
 st.markdown("---")
 
-# --- SEMÁFORO / INDICADORES AL FINAL ---
-st.subheader("🚦 Semáforo de Avance de Validación")
+# --- TABLA DE DETALLE COMPLETA CON SEMÁFORO INCORPORADO ---
+st.subheader("📋 Detalle de Asignaturas")
 
-total_asignaturas = len(df_filtered)
-completadas = len(df_filtered[df_filtered[col_estado].astype(str).str.contains("Pasa|Aprobad|Completa", case=False, na=False)])
-observadas = len(df_filtered[df_filtered[col_estado].astype(str).str.contains("Observad", case=False, na=False)])
-pendientes = total_asignaturas - (completadas + observadas)
+# Crear una columna visual con semáforo/badge para la tabla de datos
+def generar_badge_estado(val):
+    val_str = str(val).lower()
+    if "pasa" in val_str or "aprobad" in val_str or "completa" in val_str:
+        return "🟢 Pasa a implementación"
+    elif "observad" in val_str:
+        return "🟡 Observada"
+    else:
+        return "🔴 Sin registro / No iniciada"
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Total Asignaturas", total_asignaturas)
-m2.metric("🟢 Pasa a Implementación", completadas)
-m3.metric("🔴 Observadas", observadas)
-m4.metric("🟣 Sin Registro / No iniciada", pendientes)
+# Insertar la columna de Semáforo visual al inicio
+df_display = df_filtered.copy()
+df_display.insert(0, "Semáforo Estado", df_display[col_estado].apply(generar_badge_estado))
+
+# Desplegar la tabla completa con todas las columnas del Excel
+st.dataframe(
+    df_display,
+    use_container_width=True,
+    hide_index=True
+)
