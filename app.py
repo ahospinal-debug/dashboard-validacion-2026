@@ -19,30 +19,26 @@ st.sidebar.header("⚙️ Configuración y Filtros")
 # Carga automática directa desde el repositorio de GitHub
 df = pd.read_excel("Seguimiento Validación 2026 (1).xlsx")
 
-# --- IDENTIFICACIÓN EXACTA O POR LETRA DE COLUMNA ---
-def get_col(letters, keywords):
-    for kw in keywords:
-        for col in df.columns:
-            if kw.lower() in str(col).lower():
-                return col
-    for letter in letters:
-        idx = sum((ord(c.upper()) - 64) * (26 ** i) for i, c in enumerate(reversed(letter))) - 1
-        if 0 <= idx < len(df.columns):
-            return df.columns[idx]
+# --- IDENTIFICACIÓN FLEXIBLE Y ROBUSTA DE COLUMNAS POR CONTENIDO ---
+def get_col(keywords):
+    for col in df.columns:
+        col_str = str(col).lower().replace('\n', ' ').strip()
+        if all(kw.lower() in col_str for kw in keywords):
+            return col
     return None
 
-# Mapeo según especificaciones
-col_validador = get_col(["O"], ["VALIDADOR", "VALIADORA"])
-col_disenador = get_col(["AB"], ["DISEÑADOR INSTRUCCIONAL", "DISEÑADOR", "DISENADOR"])
-col_obs = get_col(["AJ"], ["NIVEL DE OBSERVACIÓN", "NIVEL DE OBSERVACION", "OBSERVACIÓN"])
-col_estado = get_col([], ["ESTADO DE LA VALIDACIÓN", "ESTADO VALIDACION", "ESTADO DE VALIDACION"])
-col_eap = get_col([], ["EAP", "CARRERA", "PROGRAMA"])
-col_asig = get_col([], ["ASIGNATURA", "NOMBRE ASIGNATURA", "CURSO"])
+# Mapeo flexible sin depender de letras ni posiciones fijas
+col_validador = get_col(["validador"])
+col_disenador = get_col(["diseñador"]) or get_col(["disenador"])
+col_obs = get_col(["nivel", "observ"]) or get_col(["observación"]) or get_col(["observacion"])
+col_estado = get_col(["estado", "validac"]) or get_col(["estado"])
+col_eap = get_col(["eap"]) or get_col(["carrera"]) or get_col(["programa"])
+col_asig = get_col(["asignatura"]) or get_col(["curso"])
 
 # Columnas de Fechas para las Reglas del Semáforo
-col_f_ter_val = get_col(["U"], ["FECHA DE TERMINO DE VALIDACION", "TÉRMINO DE VALIDACIÓN", "TERMINO DE VALIDACION"])
-col_f_envio_obs = get_col(["AG"], ["FECHA DE ENVÍO DE OBSERVACIONES", "ENVIO DE OBSERVACIONES", "OBSERVACIONES DEL VALIDADOR"])
-col_f_resp_dis = get_col(["AK"], ["FECHA DE RESPUESTA DEL DISEÑADOR", "RESPUESTA DEL DISEÑADOR", "RESPUESTA DISEÑADOR"])
+col_f_ter_val = get_col(["término"]) or get_col(["termino"])
+col_f_envio_obs = get_col(["envío"]) or get_col(["envio"])
+col_f_resp_dis = get_col(["respuesta"])
 
 if not col_estado:
     col_estado = df.columns[10] if len(df.columns) > 10 else df.columns[0]
@@ -73,7 +69,7 @@ def calcular_semaforo_actualizado(row):
 
     alertas = []
 
-    # 1) Evaluación Validador en días hábiles (Col. AG vs Col. U)
+    # 1) Evaluación Validador en días hábiles (Envío de Obs. vs Término de Validación)
     if pd.notnull(f_AG) and pd.notnull(f_U):
         dias_val = obtener_dias_habiles(f_U, f_AG)
         if not np.isnan(dias_val):
@@ -82,7 +78,7 @@ def calcular_semaforo_actualizado(row):
             else:
                 alertas.append('🔴 Validador Vencido')
 
-    # 2) Evaluación Diseñador en días hábiles (Col. AK vs Col. AG + 2 días L-V)
+    # 2) Evaluación Diseñador en días hábiles (Respuesta Diseñador vs Envío de Obs. + 2 días L-V)
     if pd.notnull(f_AK) and pd.notnull(f_AG):
         dias_dis = obtener_dias_habiles(f_AG, f_AK)
         if not np.isnan(dias_dis):
@@ -110,7 +106,7 @@ if col_eap and col_eap in df.columns:
 validador_sel = "Todos"
 if col_validador and col_validador in df.columns:
     validadores = ["Todos"] + sorted([str(x) for x in df[col_validador].dropna().unique()])
-    validador_sel = st.sidebar.selectbox("👤 Validador (Col. O):", validadores)
+    validador_sel = st.sidebar.selectbox("👤 Validador:", validadores)
 
 df_validador = df.copy()
 if validador_sel != "Todos":
@@ -119,7 +115,7 @@ if validador_sel != "Todos":
 disenador_sel = "Todos"
 if col_disenador and col_disenador in df_validador.columns:
     disenadores_disponibles = ["Todos"] + sorted([str(x) for x in df_validador[col_disenador].dropna().unique()])
-    disenador_sel = st.sidebar.selectbox("🎨 Diseñador Instruccional (Col. AB):", disenadores_disponibles)
+    disenador_sel = st.sidebar.selectbox("🎨 Diseñador Instruccional:", disenadores_disponibles)
 
 df_final = df_validador.copy()
 if disenador_sel != "Todos":
